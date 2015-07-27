@@ -1,11 +1,12 @@
 module Network.Tor.Config where
 
 import Data.Word
+import Data.Maybe
 import Data.Map as Map
 import Network.Tor.Utils
 import Text.ParserCombinators.Parsec
 import Text.Parsec.Combinator
-import Control.Applicative ((<$>), (<*>), (<$))
+import Control.Applicative ((<$>), (<*>), (<$), (*>))
 
 data Config = Config {
   isPublicServer :: Bool,
@@ -79,17 +80,19 @@ parseKeyValues file = parse kVs "(unknown)" file
 
 kVs :: GenParser Char st [(String, String)]
 kVs = do
-  result <- many line
+  result <- fmap catMaybes $ many (line <|> commentLine)
   eof
   return result
 
-line :: GenParser Char st (String, String)
+line :: GenParser Char st (Maybe (String, String))
 line = do
   key <- many1 letter
   space
   value <- many1 anyChar
   eol
-  return (key, value)  
+  return $ Just (key, value) 
+
+commentLine = Nothing <$ (string "#" *> many anyChar *> eol)
 
 eol :: GenParser Char st Char
 eol = char '\n'

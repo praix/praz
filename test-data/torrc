@@ -1,0 +1,11 @@
+# the ports 
+orport 3000
+dirport 3400
+
+datadirectory /tmp
+
+#info
+contact danoctavian91@gmail.com
+nickname shukarRelay
+address localcombat
+
