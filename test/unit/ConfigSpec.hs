@@ -15,14 +15,24 @@ spec = do
       fileContents <- readFile "test-data/torrc"
       let parsedConfig = Config.fromFile fileContents
       parsedConfig `shouldBe`
-        Config {
+        Right Config {
           isPublicServer = True,
           orPort = 3000,
           dirPort = 3400,
           dataDirectory = "/tmp",
           -- FIXME: finish this up
-          descriptorInfo = undefined, -- DescriptorInfo {},
-          bandwidthInfo = undefined -- BandwidthInfo {},
-                    -- FIXME: add exit policy and family
+          descriptorInfo = DescriptorInfo {
+            contact = "danoctavian91@gmail.com",
+            nickname = "shukarRelay",
+            address = "localcombat",
+            platform = "Tor on haskell"
+          },
+          bandwidthInfo = BandwidthInfo {
+            bandwidthAvg = 1073741824,
+            bandwidthBurst = 1000,
+            bandwidthObserved = (2 ^ 16 :: Int)
+          },
+          family = ["troll", "orc"]       -- FIXME: add exit policy and family
         } 
       return ()
+    return ()
