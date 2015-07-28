@@ -1,4 +1,10 @@
-module Network.Tor.Config where
+module Network.Tor.Config (
+    fromFile
+  , Config (..)
+  , BandwidthInfo (..)
+  , DescriptorInfo (..)
+  , ConfigError (..)
+  ) where
 
 import Prelude as P
 import Data.Word
@@ -8,7 +14,6 @@ import Data.Char
 import Data.Map as Map
 import Network.Tor.Utils
 import Text.ParserCombinators.Parsec
-import Text.ParserCombinators.Parsec.Token hiding (commentLine)
 import Text.ParserCombinators.Parsec.Error
 import Text.ParserCombinators.Parsec.Pos
 import Text.Parsec.Combinator
@@ -111,7 +116,7 @@ kVs = do
 line :: GenParser Char st (Maybe (String, String))
 line = do
   key <- many1 letter
-  space
+  _ <- space
   value <- manyTill anyChar (try eol)
   return $ Just (key, value) 
 
