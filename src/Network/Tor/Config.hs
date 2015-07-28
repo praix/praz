@@ -4,6 +4,7 @@ import Prelude as P
 import Data.Word
 import Data.Map as Map
 import Data.Maybe
+import Data.Char
 import Data.Map as Map
 import Network.Tor.Utils
 import Text.ParserCombinators.Parsec
@@ -45,7 +46,8 @@ data ConfigError = ParseErr ParseError | MissingConfigValue String
 fromFile :: String -> Either ConfigError Config
 fromFile content = do
   kvs <- mapLeft ParseErr $ parseKeyValues content
-  parseConfig (Map.fromList kvs)
+  let updatedKvs = P.map (\(k, v) ->  (P.map toLower k, v)) kvs 
+  parseConfig (Map.fromList updatedKvs)
 
 parseConfig configMap
   = let f = field configMap in
@@ -76,7 +78,7 @@ parseBandwidthInfo configMap
 bool = True <$ string "true" <|> False <$ string "false"
 num = read <$> many1 digit
 str = many1 anyChar
-commaSeparated = (many1 anyChar) `sepBy1` (string ", ")
+commaSeparated = (many1 (satisfy (/= ','))) `sepBy1` (string ", ")
 
 bandwidth = do
   val <- read <$> many1 digit
@@ -87,6 +89,7 @@ bandwidth = do
   return $ val * (fromJust $ P.lookup unit unitMultiplier)
 
 data Unit = Bytes | KBytes | MBytes | GBytes | KBits | MBits | GBits deriving (Show, Read, Eq)
+
 unitMultiplier = [(Bytes, 1), (KBytes, 10 ^ 3), (MBytes, 10 ^ 6), (GBytes, 10 ^ 9),
                   (KBits, 125), (MBits, 125 * 10 ^ 3), (GBits, 125 * 10 ^ 6)]
 
@@ -101,7 +104,7 @@ parseKeyValues file = parse kVs "(unknown)" file
 
 kVs :: GenParser Char st [(String, String)]
 kVs = do
-  result <- fmap catMaybes $ many (line <|> commentLine)
+  result <- fmap catMaybes $ many (line <|> commentLine <|> blank) 
   eof
   return result
 
@@ -109,11 +112,12 @@ line :: GenParser Char st (Maybe (String, String))
 line = do
   key <- many1 letter
   space
-  value <- many1 anyChar
-  eol
+  value <- manyTill anyChar (try eol)
   return $ Just (key, value) 
 
-commentLine = Nothing <$ (string "#" *> many anyChar *> eol)
+commentLine = Nothing <$ (string "#" *> (manyTill anyChar (try eol)))
+
+blank = Nothing <$ (manyTill space (try eol))
 
 eol :: GenParser Char st Char
 eol = char '\n'
