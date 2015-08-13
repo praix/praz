@@ -127,8 +127,6 @@ blank = Nothing <$ (manyTill space (try eol))
 eol :: GenParser Char st Char
 eol = char '\n'
 
-err = newErrorMessage (Message "failed parsing bandwidth") $ newPos "config" 1 2
-
 {-
  as defined in golang
 data ExitRule struct {
